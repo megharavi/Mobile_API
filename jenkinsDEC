@@ -1,0 +1,29 @@
+pipeline{
+    agent { dockerfile true}
+    tools{
+        maven 'maven'
+        jdk 'jdk8'
+    }
+    stages{
+        stage('print'){
+            steps{
+                sh 'echo "printing Hello"'
+            }
+        }
+        stage('git-checkout'){
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/megharavi/Mobile_API.git']]])
+            }
+        }
+        stage('build'){
+            steps{
+                sh 'mvn clean verify'
+            }
+        }
+        stage('docker_image'){
+            steps{
+                dockerShell connector: [$class: 'DockerConnector', connectorType: 'JERSEY', credentialsId: '', serverUrl: ''], containerLifecycle: [createContainer: [bindAllPorts: false, bindPorts: '', command: '', cpusetCpus: '', cpusetMems: '', hostname: '', memoryLimit: 0, privileged: false, shmSize: 0, tty: false, user: '', workdir: ''], image: 'mobile_api_image', pullImage: [credentialsId: '']], longConnector: [$class: 'DockerConnector', connectorType: 'JERSEY', credentialsId: '', serverUrl: ''], shellScript: 'docker -t mobile_api_image -f dockerfile /var/jenkins_home/workspace/pipe/dockerfile'
+            }
+        }
+    }
+}
